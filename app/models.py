@@ -11,9 +11,9 @@ class User(AbstractUser):
 
 @receiver(models.signals.post_delete, sender=User)
 def auto_delete_file_on_delete(sender, instance, **kwargs):
-    if instance.file:
-        if os.path.isfile(instance.file.path):
-            os.remove(instance.file.path)
     if instance.profile_picture and instance.profile_picture.name != DEFAULT_PROFILE_PICTURE:
         if os.path.isfile(instance.profile_picture.path):
             os.remove(instance.profile_picture.path)
+    # if instance.file:
+    #     if os.path.isfile(instance.file.path):
+    #         os.remove(instance.file.path)
