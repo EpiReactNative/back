@@ -8,6 +8,7 @@ from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateMode
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import IsAuthenticated
 
+
 class GenericAPIViewset(GenericViewSet):
     """
     Endpoints génériques
@@ -19,6 +20,7 @@ class GenericAPIViewset(GenericViewSet):
     def whoami(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
 
 class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = User.objects.all()
