@@ -23,10 +23,8 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Simdrive API",
+        title="Epigram API",
         default_version='v1',
-        description="SIMCO DRIVE",
-        contact=openapi.Contact(email="dsi@simco.fr"),
     ),
     public=True
 )
@@ -34,7 +32,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('', lambda r: redirect('/admin')),
     path('admin/', admin.site.urls),
-    path('api/swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='Swagger'),
+    path('api/swagger/', schema_view.with_ui('swagger',
+         cache_timeout=0), name='Swagger'),
     path('', include('app.urls')),
 ]
 

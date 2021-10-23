@@ -6,8 +6,12 @@ from django.dispatch import receiver
 DEFAULT_PROFILE_PICTURE = '/profile_picture/default.jpg'
 
 # Create your models here.
+
+
 class User(AbstractUser):
-    profile_picture = models.ImageField(upload_to='profile_picture', default=DEFAULT_PROFILE_PICTURE)
+    profile_picture = models.ImageField(
+        upload_to='profile_picture', default=DEFAULT_PROFILE_PICTURE)
+
 
 @receiver(models.signals.post_delete, sender=User)
 def auto_delete_file_on_delete(sender, instance, **kwargs):
