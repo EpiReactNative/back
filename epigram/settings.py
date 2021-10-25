@@ -32,6 +32,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'epigrambe.herokuapp.com',
+    'localhost',
 ]
 
 AUTH_USER_MODEL = 'app.User'
