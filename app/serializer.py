@@ -5,10 +5,14 @@ from drf_extra_fields.fields import Base64ImageField
 
 
 class UserSerializer(serializers.ModelSerializer):
+    posts = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = '__all__'
+
+    def get_posts(self, obj):
+        return [PostSerializer(post).data for post in obj.post_set.all()]
 
     def create(self, *args, **kwargs):
         user = super().create(*args, **kwargs)

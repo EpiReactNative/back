@@ -11,6 +11,7 @@ DEFAULT_PROFILE_PICTURE = '/profile_picture/default.jpg'
 class User(AbstractUser):
     profile_picture = models.ImageField(
         upload_to='profile_picture', default=DEFAULT_PROFILE_PICTURE)
+    bio = models.TextField(max_length=1000, blank=True);
     
     def __str__(self):
         return self.username
