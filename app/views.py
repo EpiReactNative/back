@@ -1,5 +1,5 @@
 from .models import User, Post
-from .serializer import UserSerializer, PostSerializer, PostCreationSerializer
+from .serializer import UserSerializer, UserDetailSerializer, PostSerializer, PostCreationSerializer
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.decorators import action
@@ -17,13 +17,18 @@ class GenericAPIViewset(GenericViewSet):
 
     @action(detail=False, methods=['GET'], serializer_class=UserSerializer)
     def whoami(self, request):
-        serializer = UserSerializer(request.user)
+        serializer = UserDetailSerializer(request.user)
         return Response(serializer.data)
 
 
 class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return UserDetailSerializer
+        return UserSerializer
 
 
 class PostViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyModelMixin, GenericViewSet):

@@ -11,8 +11,9 @@ DEFAULT_PROFILE_PICTURE = '/profile_picture/default.jpg'
 class User(AbstractUser):
     profile_picture = models.ImageField(
         upload_to='profile_picture', default=DEFAULT_PROFILE_PICTURE)
-    bio = models.TextField(max_length=1000, blank=True);
-    
+    bio = models.TextField(max_length=1000, blank=True)
+    following = models.ManyToManyField('self', blank=True, symmetrical=False)
+
     def __str__(self):
         return self.username
 
@@ -22,14 +23,13 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
     if instance.profile_picture and instance.profile_picture.name != DEFAULT_PROFILE_PICTURE:
         if os.path.isfile(instance.profile_picture.path):
             os.remove(instance.profile_picture.path)
-    # if instance.file:
-    #     if os.path.isfile(instance.file.path):
-    #         os.remove(instance.file.path)
+
 
 class Post(models.Model):
     caption = models.TextField(max_length=1000, blank=True)
     image = models.ImageField(upload_to="post/")
     author = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+
 
 @receiver(models.signals.post_delete, sender=Post)
 def auto_delete_file_on_delete(sender, instance, **kwargs):
