@@ -5,14 +5,10 @@ from drf_extra_fields.fields import Base64ImageField
 
 
 class UserSerializer(serializers.ModelSerializer):
-    posts = serializers.SerializerMethodField()
-
     class Meta:
         model = User
-        fields = '__all__'
-
-    def get_posts(self, obj):
-        return [PostSerializer(post).data for post in obj.post_set.all()]
+        # fields = '__all__'
+        exclude = ['following',]
 
     def create(self, *args, **kwargs):
         user = super().create(*args, **kwargs)
@@ -28,6 +24,26 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    posts = serializers.SerializerMethodField()
+    followers = serializers.SerializerMethodField()
+    following = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = '__all__'
+
+    def get_posts(self, obj):
+        return [PostSerializer(post).data for post in obj.post_set.all()]
+
+    def get_followers(self, obj):
+        return [UserSerializer(user).data for user in User.objects.filter(following=obj)]
+    
+    def get_following(self, obj):
+        print(obj.following.all())
+        return [UserSerializer(user).data for user in obj.following.all()]
 
 
 class PostSerializer(serializers.ModelSerializer):
