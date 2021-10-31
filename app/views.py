@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyModelMixin, UpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import LimitOffsetPagination
 
 
 class GenericAPIViewset(GenericViewSet):
@@ -26,9 +27,57 @@ class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
     serializer_class = UserSerializer
 
     def get_serializer_class(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['retrieve']:
             return UserDetailSerializer
         return UserSerializer
+
+    @action(detail=True, methods=['get'])
+    def followers(self, request, pk=None):
+        users = User.objects.filter(id=pk)
+        if len(users) != 1:
+            return Response('Unable to find user', status=400)
+        user = users[0]
+        queryset = User.objects.filter(following=user)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = UserSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def following(self, request, pk=None):
+        users = User.objects.filter(id=pk)
+        if len(users) != 1:
+            return Response('Unable to find user', status=400)
+        user = users[0]
+        queryset = user.following.all()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = UserSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def posts(self, request, pk=None):
+        users = User.objects.filter(id=pk)
+        if len(users) != 1:
+            return Response('Unable to find user', status=400)
+        user = users[0]
+        queryset = user.post_set.all()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = PostSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = PostSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class PostViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyModelMixin, GenericViewSet):
@@ -46,15 +95,3 @@ class PostViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
         if self.action == 'create':
             context.update({"request": self.request})
         return context
-
-    # def create(self, request, *args, **kwargs):
-    #     serializer = PostCreationSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save(author=User.objects.filter(id=1))
-    #         return Response(serializer.data, status=201)
-    #     return Response(serializer.errors, status=400)
-
-    # def perform_create(self, serializer):
-    #     print('hey ' + self.request.user.username + '!')
-    #     # serializer.save()
-    #     serializer.save(author=self.request.user)
