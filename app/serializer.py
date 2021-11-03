@@ -18,6 +18,14 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+class UserUpdateSerializer(serializers.ModelSerializer):
+    profile_picture = Base64ImageField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'password',
+                  'last_name', 'profile_picture', 'bio', ]
+
     def update(self, *args, **kwargs):
         user = super().update(*args, **kwargs)
         password = user.password
