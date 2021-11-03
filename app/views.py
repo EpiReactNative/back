@@ -1,5 +1,5 @@
 from .models import User, Post
-from .serializer import UserSerializer, UserDetailSerializer, PostSerializer, PostCreationSerializer
+from .serializer import UserSerializer, UserDetailSerializer, UserUpdateSerializer, PostSerializer, PostCreationSerializer
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.decorators import action
@@ -29,6 +29,8 @@ class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
     def get_serializer_class(self):
         if self.action in ['retrieve']:
             return UserDetailSerializer
+        if self.action in ['update']:
+            return UserUpdateSerializer
         return UserSerializer
 
     @action(detail=True, methods=['get'])
