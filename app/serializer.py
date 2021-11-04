@@ -54,10 +54,14 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = '__all__'
+
+    def get_author(self, obj):
+        return UserSerializer(obj.author).data
 
 
 class PostCreationSerializer(serializers.ModelSerializer):
