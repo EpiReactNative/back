@@ -18,21 +18,6 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-class UserUpdateSerializer(serializers.ModelSerializer):
-    profile_picture = Base64ImageField()
-
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'first_name', 'password',
-                  'last_name', 'profile_picture', 'bio', ]
-
-    def update(self, *args, **kwargs):
-        user = super().update(*args, **kwargs)
-        password = user.password
-        user.set_password(password)
-        user.save()
-        return user
-
 
 class UserDetailSerializer(serializers.ModelSerializer):
     posts = serializers.SerializerMethodField()
@@ -69,7 +54,7 @@ class PostCreationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        exclude = ('author',)
+        exclude = ('author', 'height', 'width',)
 
     def create(self, validated_data):
         image = validated_data.pop('image')

@@ -1,12 +1,19 @@
-from .models import User, Post
-from .serializer import UserSerializer, UserDetailSerializer, UserUpdateSerializer, PostSerializer, PostCreationSerializer
+import os
+import uuid
+import base64
+
+from .misc import *
+from .models import User, Post, DEFAULT_PROFILE_PICTURE
+from .serializer import UserSerializer, UserDetailSerializer, PostSerializer, PostCreationSerializer
+from django.core.files.base import ContentFile
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyModelMixin, UpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class GenericAPIViewset(GenericViewSet):
@@ -25,13 +32,43 @@ class GenericAPIViewset(GenericViewSet):
 class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    parser_classes = (MultiPartParser, FormParser)
 
     def get_serializer_class(self):
         if self.action in ['retrieve']:
             return UserDetailSerializer
-        if self.action in ['update']:
-            return UserUpdateSerializer
         return UserSerializer
+
+    def update(self, request, pk, format=None, partial=True):
+        queryset = self.get_queryset().filter(id=pk)
+        if not len(queryset):
+            return Response(status.HTTP_404_NOT_FOUND)
+        user = queryset[0]
+        if 'username' in request.data:
+            user.username = request.data['username']
+        if 'email' in request.data:
+            user.email = request.data['email']
+        if 'first_name' in request.data:
+            user.first_name = request.data['first_name']
+        if 'last_name' in request.data:
+            user.last_name = request.data['last_name']
+        if 'bio' in request.data:
+            user.bio = request.data['bio']
+        if 'password' in request.data:
+            user.set_password(request.data['password'])
+        if 'profile_picture' in request.data:
+            header, base64_data = request.data['profile_picture'].split(
+                ';base64,')
+            decoded_file = base64.b64decode(base64_data)
+            file_name = str(uuid.uuid4())
+            file_extension = get_file_extension(file_name, decoded_file)
+            if user.profile_picture and user.profile_picture.name != DEFAULT_PROFILE_PICTURE:
+                if os.path.isfile(user.profile_picture.path):
+                    os.remove(user.profile_picture.path)
+            user.profile_picture = ContentFile(
+                decoded_file, name=file_name + '.' + file_extension)
+        user.save()
+        return Response(status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'])
     def followers(self, request, pk=None):
