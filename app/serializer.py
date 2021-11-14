@@ -10,14 +10,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name',
                   'last_name', 'profile_picture', 'bio', ]
 
-    def create(self, *args, **kwargs):
-        user = super().create(*args, **kwargs)
-        password = user.password
-        user.set_password(password)
-        user.is_active = True
-        user.save()
-        return user
-
 
 class UserDetailSerializer(serializers.ModelSerializer):
     posts = serializers.SerializerMethodField()
@@ -27,6 +19,14 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+
+    def create(self, *args, **kwargs):
+        user = super().create(*args, **kwargs)
+        password = user.password
+        user.set_password(password)
+        user.is_active = True
+        user.save()
+        return user
 
     def get_posts(self, obj):
         return [int(post) for post in obj.author.all()]

@@ -7,6 +7,7 @@ from .models import User, Post, DEFAULT_PROFILE_PICTURE
 from .serializer import UserSerializer, UserDetailSerializer, PostSerializer, PostCreationSerializer
 from django.core.files.base import ContentFile
 from rest_framework import status
+from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.decorators import action
@@ -39,9 +40,15 @@ class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
     parser_classes = (MultiPartParser, FormParser)
 
     def get_serializer_class(self):
-        if self.action in ['retrieve']:
+        if self.action in ['retrieve', 'create']:
             return UserDetailSerializer
         return UserSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if self.action == 'create':
+            context.update({"request": self.request})
+        return context
 
     def update(self, request, pk, format=None, partial=True):
         queryset = self.get_queryset().filter(id=pk)
@@ -84,10 +91,12 @@ class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = UserSerializer(reversed(page), many=True, context={'request': request})
+            serializer = UserSerializer(
+                reversed(page), many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
 
-        serializer = UserSerializer(reversed(queryset), many=True, context={'request': request})
+        serializer = UserSerializer(
+            reversed(queryset), many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
@@ -100,10 +109,12 @@ class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = UserSerializer(reversed(page), many=True, context={'request': request})
+            serializer = UserSerializer(
+                reversed(page), many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
 
-        serializer = UserSerializer(reversed(queryset), many=True, context={'request': request})
+        serializer = UserSerializer(
+            reversed(queryset), many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
@@ -144,7 +155,6 @@ class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
 
     @action(detail=True, methods=['post'], serializer_class=None)
     def follow(self, request, pk=None):
-        parser_classes = JSONParser
         queryset = self.get_queryset()
         users = queryset.filter(id=pk)
         if len(users) != 1:
@@ -157,6 +167,40 @@ class UserViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
         user.save()
         serializer = UserDetailSerializer(
             request.user, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def news(self, request, pk=None):
+        following = [int(user)
+                     for user in request.user.following.all()] + [request.user.id]
+        queryset = Post.objects.filter(
+            author__in=following).order_by('-created_at')
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = PostSerializer(
+                page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = PostSerializer(
+            queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def search(self, request, pk=None):
+        if not request.data['search']:
+            raise exceptions.NotAcceptable('Cannot access the specified path')
+        queryset = self.get_queryset().filter(
+            username__icontains=request.data['search'])
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = UserSerializer(
+                reversed(page), many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = UserSerializer(
+            reversed(queryset), many=True, context={'request': request})
         return Response(serializer.data)
 
 
@@ -175,6 +219,19 @@ class PostViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
         if self.action == 'create':
             context.update({"request": self.request})
         return context
+
+    def list(self, request):
+        queryset = self.get_queryset().order_by('-created_at')
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = PostSerializer(
+                page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = PostSerializer(
+            queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
@@ -206,5 +263,6 @@ class PostViewset(ListModelMixin, RetrieveModelMixin, CreateModelMixin, DestroyM
                 reversed(page), many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
 
-        serializer = UserSerializer(reversed(users), many=True, context={'request': request})
+        serializer = UserSerializer(
+            reversed(users), many=True, context={'request': request})
         return Response(serializer.data)
