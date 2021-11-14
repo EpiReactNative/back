@@ -13,12 +13,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='post',
             name='height',
-            field=models.IntegerField(),
+            field=models.IntegerField(null=True),
         ),
         migrations.AddField(
             model_name='post',
             name='width',
-            field=models.IntegerField(),
+            field=models.IntegerField(null=True),
         ),
         migrations.AlterField(
             model_name='post',

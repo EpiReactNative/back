@@ -15,6 +15,9 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+    def __int__(self):
+        return self.id
+
 
 @receiver(models.signals.post_delete, sender=User)
 def auto_delete_file_on_delete(sender, instance, **kwargs):
@@ -24,12 +27,17 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
 
 
 class Post(models.Model):
-    author = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='author')
+    likes = models.ManyToManyField(User, blank=True, symmetrical=False, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
     caption = models.TextField(max_length=1000, blank=True)
-    height = models.IntegerField()
-    width = models.IntegerField()
+    height = models.IntegerField(null=True)
+    width = models.IntegerField(null=True)
     image = models.ImageField(
         upload_to="post/", height_field='height', width_field='width')
+
+    def __int__(self):
+        return self.id
 
 
 @receiver(models.signals.post_delete, sender=Post)

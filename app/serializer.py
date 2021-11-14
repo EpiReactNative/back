@@ -29,13 +29,13 @@ class UserDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_posts(self, obj):
-        return [PostSerializer(post).data['id'] for post in obj.post_set.all()]
+        return [int(post) for post in obj.author.all()]
 
     def get_followers(self, obj):
-        return [UserSerializer(user).data['id'] for user in User.objects.filter(following=obj)]
+        return [int(user) for user in User.objects.filter(following=obj)]
 
     def get_following(self, obj):
-        return [UserSerializer(user).data['id'] for user in obj.following.all()]
+        return [int(user) for user in obj.following.all()]
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -46,7 +46,7 @@ class PostSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_author(self, obj):
-        return UserSerializer(obj.author).data
+        return UserSerializer(obj.author, context={'request': self.context['request']}).data
 
 
 class PostCreationSerializer(serializers.ModelSerializer):
